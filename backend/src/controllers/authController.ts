@@ -38,7 +38,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ message: 'Invalid input', errors: error.errors });
+      res.status(400).json({ message: 'Invalid input', errors: error.issues });
     } else {
       res.status(500).json({ message: 'Internal server error' });
     }
