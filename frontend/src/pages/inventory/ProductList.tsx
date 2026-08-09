@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Edit2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import api from '../../api/client';
 import StockMovementModal from './StockMovementModal';
+import { Pagination } from '../../components/Pagination';
+import { SearchInput } from '../../components/SearchInput';
 
 const ProductList: React.FC = () => {
   const navigate = useNavigate();
@@ -32,15 +34,7 @@ const ProductList: React.FC = () => {
 
       <div style={{ border: '1px solid var(--color-rule)', borderRadius: '2px' }}>
         <div className="flex items-center px-4 py-3" style={{ borderBottom: '1px solid var(--color-rule)' }}>
-          <Search className="w-4 h-4 mr-3 shrink-0" style={{ color: 'var(--color-muted)' }} />
-          <input
-            type="text"
-            placeholder="Search name, SKU…"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="flex-1 bg-transparent outline-none text-sm"
-            style={{ color: 'var(--color-ink)' }}
-          />
+          <SearchInput value={search} onChange={(val) => { setSearch(val); setPage(1); }} placeholder="Search name, SKU…" />
         </div>
 
         <div className="overflow-x-auto">
@@ -120,19 +114,8 @@ const ProductList: React.FC = () => {
           </table>
         </div>
 
-        {data?.meta && data.meta.totalPages > 1 && (
-          <div
-            className="flex items-center justify-between px-4 py-3"
-            style={{ borderTop: '1px solid var(--color-rule)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem' }}
-          >
-            <span style={{ color: 'var(--color-muted)' }}>
-              {(page - 1) * limit + 1}–{Math.min(page * limit, data.meta.total)} of {data.meta.total}
-            </span>
-            <div className="flex gap-2">
-              <button className="btn-secondary py-1" onClick={() => setPage(p => p - 1)} disabled={page === 1}>← Prev</button>
-              <button className="btn-secondary py-1" onClick={() => setPage(p => p + 1)} disabled={page === data.meta.totalPages}>Next →</button>
-            </div>
-          </div>
+        {data?.meta && (
+          <Pagination page={data.meta.page} totalPages={data.meta.totalPages} onPageChange={setPage} />
         )}
       </div>
 

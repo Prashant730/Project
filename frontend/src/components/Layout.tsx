@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, FileText, LogOut, Menu, X, UserCog, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, Users, Package, FileText, LogOut, Menu, X, UserCog, BarChart2, Settings, Truck, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout: React.FC = () => {
@@ -13,10 +13,13 @@ const Layout: React.FC = () => {
   const navItems = [
     { name: 'Dashboard', path: '/',          icon: <LayoutDashboard className="w-4 h-4" />, roles: ['ADMIN','SALES','WAREHOUSE','ACCOUNTS'] },
     { name: 'Customers', path: '/customers', icon: <Users className="w-4 h-4" />,           roles: ['ADMIN','SALES'] },
-    { name: 'Inventory', path: '/inventory', icon: <Package className="w-4 h-4" />,          roles: ['ADMIN','WAREHOUSE'] },
+    { name: 'Suppliers',       path: '/suppliers',       icon: <Truck className="w-4 h-4" />,           roles: ['ADMIN','WAREHOUSE'] },
+    { name: 'Inventory',       path: '/inventory',       icon: <Package className="w-4 h-4" />,          roles: ['ADMIN','WAREHOUSE'] },
+    { name: 'Purchase Orders', path: '/purchase-orders', icon: <ShoppingCart className="w-4 h-4" />,     roles: ['ADMIN','WAREHOUSE'] },
     { name: 'Challans',  path: '/challans',  icon: <FileText className="w-4 h-4" />,         roles: ['ADMIN','SALES','WAREHOUSE','ACCOUNTS'] },
     { name: 'Reports',   path: '/reports',   icon: <BarChart2 className="w-4 h-4" />,        roles: ['ADMIN','ACCOUNTS'] },
     { name: 'Users',     path: '/users',     icon: <UserCog className="w-4 h-4" />,          roles: ['ADMIN'] },
+    { name: 'Settings',  path: '/settings',  icon: <Settings className="w-4 h-4" />,         roles: ['ADMIN'] },
   ].filter(i => user && i.roles.includes(user.role));
 
 

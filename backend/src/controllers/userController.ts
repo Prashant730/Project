@@ -17,13 +17,34 @@ const updateUserSchema = z.object({
   password: z.string().min(6).optional(),
 });
 
-export const getUsers = async (_req: Request, res: Response): Promise<void> => {
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string || '';
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where, skip, take: limit,
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    res.json({
+      data: users,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
-    res.json({ data: users });
   } catch {
     res.status(500).json({ message: 'Error fetching users' });
   }

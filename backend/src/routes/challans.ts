@@ -4,9 +4,10 @@ import {
   getChallanById,
   createChallan,
   confirmChallan,
-  cancelChallan
+  cancelChallan,
+  updatePayment
 } from '../controllers/challanController';
-import { authenticate } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
@@ -20,5 +21,8 @@ router.post('/', createChallan);
 // State transitions
 router.post('/:id/confirm', confirmChallan);
 router.post('/:id/cancel', cancelChallan);
+
+// Payment
+router.put('/:id/payment', authorize(['ADMIN', 'ACCOUNTS']), updatePayment);
 
 export default router;

@@ -36,123 +36,204 @@ enum ChallanStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum POStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
 model User {
-  id             String           @id @default(uuid())
-  name           String
-  email          String           @unique
-  passwordHash   String
-  role           Role
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  
-  customers      Customer[]       @relation("CustomerCreatedBy")
-  customerNotes  CustomerNote[]   @relation("CustomerNoteCreatedBy")
-  products       Product[]        @relation("ProductCreatedBy")
-  stockMovements StockMovement[]  @relation("StockMovementCreatedBy")
-  challans       Challan[]        @relation("ChallanCreatedBy")
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customers      Customer[]      @relation("CustomerCreatedBy")
+  customerNotes  CustomerNote[]  @relation("CustomerNoteCreatedBy")
+  products       Product[]       @relation("ProductCreatedBy")
+  stockMovements StockMovement[] @relation("StockMovementCreatedBy")
+  challans       Challan[]       @relation("ChallanCreatedBy")
+  suppliers      Supplier[]      @relation("SupplierCreatedBy")
+  purchaseOrders PurchaseOrder[] @relation("POCreatedBy")
 }
 
 model Customer {
-  id             String           @id @default(uuid())
-  name           String
-  mobile         String
-  email          String?
-  businessName   String?
-  gstNumber      String?
-  customerType   CustomerType     @default(RETAIL)
-  address        String?
-  status         CustomerStatus   @default(LEAD)
-  followUpDate   DateTime?
-  
-  createdById    String
-  createdBy      User             @relation("CustomerCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id           String         @id @default(uuid())
+  name         String
+  mobile       String
+  email        String?
+  businessName String?
+  gstNumber    String?
+  customerType CustomerType   @default(RETAIL)
+  address      String?
+  status       CustomerStatus @default(LEAD)
+  followUpDate DateTime?
 
-  notes          CustomerNote[]
-  challans       Challan[]
+  createdById String
+  createdBy   User   @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes    CustomerNote[]
+  challans Challan[]
 }
 
 model CustomerNote {
-  id             String           @id @default(uuid())
-  customerId     String
-  customer       Customer         @relation(fields: [customerId], references: [id])
-  note           String
-  
-  createdById    String
-  createdBy      User             @relation("CustomerNoteCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt      DateTime         @default(now())
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  note       String
+
+  createdById String
+  createdBy   User   @relation("CustomerNoteCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model Product {
-  id             String           @id @default(uuid())
-  name           String
-  sku            String           @unique
-  category       String?
-  unitPrice      Decimal
-  currentStock   Int              @default(0)
-  minStockAlert  Int              @default(10)
-  location       String?
-  
-  createdById    String
-  createdBy      User             @relation("ProductCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id            String  @id @default(uuid())
+  name          String
+  sku           String  @unique
+  category      String?
+  unitPrice     Decimal
+  currentStock  Int     @default(0)
+  minStockAlert Int     @default(10)
+  location      String?
+
+  createdById String
+  createdBy   User   @relation("ProductCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   stockMovements StockMovement[]
   challanItems   ChallanItem[]
+  poItems        PurchaseOrderItem[]
 }
 
 model StockMovement {
-  id             String           @id @default(uuid())
-  productId      String
-  product        Product          @relation(fields: [productId], references: [id])
-  quantity       Int
-  movementType   MovementType
-  reason         String?
-  
-  createdById    String
-  createdBy      User             @relation("StockMovementCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt      DateTime         @default(now())
+  id           String       @id @default(uuid())
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id])
+  quantity     Int
+  movementType MovementType
+  reason       String?
+
+  createdById String
+  createdBy   User   @relation("StockMovementCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model Challan {
-  id             String           @id @default(uuid())
-  challanNumber  String           @unique
-  customerId     String
-  customer       Customer         @relation(fields: [customerId], references: [id])
-  status         ChallanStatus    @default(DRAFT)
-  totalQuantity  Int
-  
-  createdById    String
-  createdBy      User             @relation("ChallanCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id            String        @id @default(uuid())
+  challanNumber String        @unique
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  status        ChallanStatus @default(DRAFT)
+  totalQuantity Int
 
-  items          ChallanItem[]
+  paymentStatus PaymentStatus @default(UNPAID)
+  amountPaid    Decimal       @default(0)
+  taxRate       Decimal       @default(0)
+  discount      Decimal       @default(0)
+
+  createdById String
+  createdBy   User   @relation("ChallanCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items ChallanItem[]
 }
 
 model ChallanItem {
-  id                   String           @id @default(uuid())
-  challanId            String
-  challan              Challan          @relation(fields: [challanId], references: [id])
-  
-  productId            String
-  product              Product          @relation(fields: [productId], references: [id])
-  
-  productNameSnapshot  String
-  productSkuSnapshot   String
-  unitPriceSnapshot    Decimal
-  quantity             Int
-  subtotal             Decimal
+  id        String  @id @default(uuid())
+  challanId String
+  challan   Challan @relation(fields: [challanId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  productNameSnapshot String
+  productSkuSnapshot  String
+  unitPriceSnapshot   Decimal
+  quantity            Int
+  subtotal            Decimal
+}
+
+model Supplier {
+  id            String  @id @default(uuid())
+  name          String
+  contactPerson String?
+  mobile        String?
+  email         String?
+  address       String?
+  gstNumber     String?
+
+  createdById String
+  createdBy   User   @relation("SupplierCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id            String   @id @default(uuid())
+  poNumber      String   @unique
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  status        POStatus @default(DRAFT)
+  totalQuantity Int
+
+  createdById String
+  createdBy   User   @relation("POCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id   String        @id @default(uuid())
+  poId String
+  po   PurchaseOrder @relation(fields: [poId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  productNameSnapshot String
+  productSkuSnapshot  String
+  unitCostSnapshot    Decimal
+  quantity            Int
+  subtotal            Decimal
+}
+
+model CompanyProfile {
+  id        String  @id @default(uuid())
+  name      String
+  address   String?
+  gstNumber String?
+  phone     String?
+  email     String?
+
+  updatedAt DateTime @updatedAt
 }
 
 model Sequence {
-  id          String @id
-  value       Int    @default(0)
+  id    String @id
+  value Int    @default(0)
 }

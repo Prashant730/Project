@@ -13,6 +13,12 @@ import ChallanDetail from './pages/challans/ChallanDetail';
 import UserList from './pages/users/UserList';
 import UserForm from './pages/users/UserForm';
 import ReportsPage from './pages/reports/ReportsPage';
+import SettingsPage from './pages/settings/SettingsPage';
+import SupplierList from './pages/suppliers/SupplierList';
+import SupplierForm from './pages/suppliers/SupplierForm';
+import POList from './pages/purchaseOrders/POList';
+import POForm from './pages/purchaseOrders/POForm';
+import PODetail from './pages/purchaseOrders/PODetail';
 import { useAuth } from './contexts/AuthContext';
 import type { UserRole } from './contexts/AuthContext';
 
@@ -53,6 +59,19 @@ const App = () => {
 
         {/* Reports — ADMIN + ACCOUNTS */}
         <Route path="reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'ACCOUNTS']}><ReportsPage /></ProtectedRoute>} />
+
+        {/* Settings — ADMIN */}
+        <Route path="settings" element={<ProtectedRoute allowedRoles={['ADMIN']}><SettingsPage /></ProtectedRoute>} />
+
+        {/* Suppliers — ADMIN + WAREHOUSE */}
+        <Route path="suppliers" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><SupplierList /></ProtectedRoute>} />
+        <Route path="suppliers/new" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><SupplierForm /></ProtectedRoute>} />
+        <Route path="suppliers/:id" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><SupplierForm /></ProtectedRoute>} />
+
+        {/* Purchase Orders — ADMIN + WAREHOUSE */}
+        <Route path="purchase-orders" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><POList /></ProtectedRoute>} />
+        <Route path="purchase-orders/new" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><POForm /></ProtectedRoute>} />
+        <Route path="purchase-orders/:id" element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']}><PODetail /></ProtectedRoute>} />
       </Route>
     </Routes>
   );

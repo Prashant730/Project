@@ -13,6 +13,8 @@ const schema = z.object({
     productId: z.string().uuid('Select a product'),
     quantity: z.number().int().positive('Must be positive'),
   })).min(1, 'At least one item required'),
+  taxRate: z.number().min(0).max(100).optional(),
+  discount: z.number().min(0).optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -25,7 +27,7 @@ const ChallanForm: React.FC = () => {
 
   const { register, control, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { items: [{ productId: '', quantity: 1 }] },
+    defaultValues: { items: [{ productId: '', quantity: 1 }], taxRate: 0, discount: 0 },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
@@ -33,10 +35,16 @@ const ChallanForm: React.FC = () => {
 
   const getProduct = (id: string) => productData?.data?.find((p: any) => p.id === id);
 
-  const grandTotal = watchedItems.reduce((sum: number, item: any) => {
+  const subtotal = watchedItems.reduce((sum: number, item: any) => {
     const p = getProduct(item.productId);
     return sum + (p ? Number(p.unitPrice) * (item.quantity || 0) : 0);
   }, 0);
+
+  const watchedTaxRate = watch('taxRate') || 0;
+  const watchedDiscount = watch('discount') || 0;
+  
+  const taxAmount = subtotal * (watchedTaxRate / 100);
+  const grandTotal = subtotal + taxAmount - watchedDiscount;
 
   const mutation = useMutation({
     mutationFn: async (data: FormValues) => (await api.post('/challans', data)).data,
@@ -148,16 +156,25 @@ const ChallanForm: React.FC = () => {
             })}
           </div>
 
-          {/* Grand total */}
-          <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: '1px solid var(--color-rule)' }}>
-            <div className="text-right">
-              <p className="text-xs mb-1" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-                Estimated Total
-              </p>
-              <p className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-ink)' }}>
-                ₹{grandTotal.toFixed(2)}
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>Prices snapshotted on confirmation</p>
+          <div className="mt-5 pt-4 border-t border-[var(--color-rule)] space-y-2 text-right w-64 ml-auto">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-[var(--color-muted)]">Subtotal</span>
+              <span className="font-mono">₹{subtotal.toFixed(2)}</span>
+            </div>
+            
+            <div className="flex justify-between items-center text-sm gap-4">
+              <span className="text-[var(--color-muted)] whitespace-nowrap">Tax Rate (%)</span>
+              <input type="number" step="0.1" min="0" max="100" {...register('taxRate', { valueAsNumber: true })} className="field-input w-20 text-right font-mono" />
+            </div>
+
+            <div className="flex justify-between items-center text-sm gap-4 border-b border-[var(--color-rule)] pb-2">
+              <span className="text-[var(--color-muted)] whitespace-nowrap">Discount (₹)</span>
+              <input type="number" min="0" {...register('discount', { valueAsNumber: true })} className="field-input w-24 text-right font-mono" />
+            </div>
+
+            <div className="flex justify-between items-end pt-2">
+              <span className="text-xs font-mono tracking-wider uppercase text-[var(--color-muted)]">Estimated Total</span>
+              <span className="text-2xl font-semibold font-mono text-[var(--color-ink)]">₹{Math.max(0, grandTotal).toFixed(2)}</span>
             </div>
           </div>
         </div>

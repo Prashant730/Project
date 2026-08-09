@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Shield, ShoppingBag, Package, Calculator, User } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
+import { Pagination } from '../../components/Pagination';
+import { SearchInput } from '../../components/SearchInput';
 
 const roleConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   ADMIN:     { label: 'Admin',     icon: <Shield className="w-3 h-3" />,      color: 'var(--color-terracotta)' },
@@ -16,9 +18,13 @@ const UserList: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const limit = 10;
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => (await api.get('/users')).data,
+    queryKey: ['users', page, search],
+    queryFn: async () => (await api.get(`/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`)).data,
   });
 
   return (
@@ -34,6 +40,10 @@ const UserList: React.FC = () => {
           <Plus className="w-3.5 h-3.5" />
           New User
         </button>
+      </div>
+
+      <div className="flex items-center">
+        <SearchInput value={search} onChange={(val) => { setSearch(val); setPage(1); }} placeholder="Search by name or email..." />
       </div>
 
       <div style={{ border: '1px solid var(--color-rule)', borderRadius: '2px' }}>
@@ -112,6 +122,9 @@ const UserList: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {data?.meta && (
+          <Pagination page={data.meta.page} totalPages={data.meta.totalPages} onPageChange={setPage} />
+        )}
       </div>
     </div>
   );

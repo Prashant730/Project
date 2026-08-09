@@ -12,6 +12,8 @@ const challanItemSchema = z.object({
 const challanCreateSchema = z.object({
   customerId: z.string().uuid(),
   items: z.array(challanItemSchema).min(1),
+  taxRate: z.number().min(0).max(100).optional().default(0),
+  discount: z.number().min(0).optional().default(0),
 });
 
 export const getChallans = async (req: Request, res: Response): Promise<void> => {
@@ -76,6 +78,40 @@ export const getChallanById = async (req: Request, res: Response): Promise<void>
   }
 };
 
+const paymentUpdateSchema = z.object({
+  amountPaid: z.number().min(0),
+});
+
+export const updatePayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { amountPaid } = paymentUpdateSchema.parse(req.body);
+
+    const challan = await prisma.challan.findUnique({
+      where: { id },
+      include: { items: true }
+    });
+    if (!challan) { res.status(404).json({ message: 'Not found' }); return; }
+
+    const subtotal = challan.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
+    const tax = subtotal * (Number(challan.taxRate) / 100);
+    const grandTotal = subtotal + tax - Number(challan.discount);
+
+    let paymentStatus = 'UNPAID';
+    if (amountPaid >= grandTotal - 0.01) paymentStatus = 'PAID'; // Tolerance for rounding
+    else if (amountPaid > 0) paymentStatus = 'PARTIAL';
+
+    const updated = await prisma.challan.update({
+      where: { id },
+      data: { amountPaid, paymentStatus: paymentStatus as any },
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    res.status(500).json({ message: 'Error updating payment' });
+  }
+};
+
 export const createChallan = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const data = challanCreateSchema.parse(req.body);
@@ -133,6 +169,8 @@ export const createChallan = async (req: AuthRequest, res: Response): Promise<vo
         customerId: data.customerId,
         status: ChallanStatus.DRAFT,
         totalQuantity,
+        taxRate: data.taxRate,
+        discount: data.discount,
         createdById: userId,
         items: {
           create: challanItemsToCreate
