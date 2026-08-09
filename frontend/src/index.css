@@ -1,1 +1,104 @@
 @import "tailwindcss";
+
+/* ───────────────────────────────────────
+   Design Tokens
+──────────────────────────────────────── */
+:root {
+  --bg-main: #f3f4f6;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f9fafb;
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-900: #312e81;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #1e293b;
+    --color-surface: #1e293b;
+    --color-surface-muted: #0f172a;
+  }
+}
+
+/* ───────────────────────────────────────
+   Base
+──────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 99px; }
+
+/* ───────────────────────────────────────
+   Utilities
+──────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass {
+    background: rgba(30, 41, 59, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+.bg-surface      { background-color: var(--color-surface); }
+.bg-surface-muted { background-color: var(--color-surface-muted); }
+.text-text-main  { color: var(--text-main); }
+.text-text-muted { color: var(--text-muted); }
+.border-border-color { border-color: var(--border-color); }
+
+/* ───────────────────────────────────────
+   Animations
+──────────────────────────────────────── */
+.animate-fade-in  { animation: fadeIn  0.35s ease-out both; }
+.animate-slide-up { animation: slideUp 0.45s ease-out both; }
+
+@keyframes fadeIn  { from { opacity: 0; }                         to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ───────────────────────────────────────
+   Primary colour helpers
+──────────────────────────────────────── */
+.bg-primary-50   { background-color: var(--color-primary-50); }
+.bg-primary-100  { background-color: var(--color-primary-100); }
+.bg-primary-600  { background-color: var(--color-primary-600); }
+.bg-primary-700  { background-color: var(--color-primary-700); }
+.text-primary-400 { color: var(--color-primary-400); }
+.text-primary-500 { color: var(--color-primary-500); }
+.text-primary-600 { color: var(--color-primary-600); }
+.text-primary-700 { color: var(--color-primary-700); }
+.hover\:bg-primary-50:hover  { background-color: var(--color-primary-50); }
+.hover\:bg-primary-700:hover { background-color: var(--color-primary-700); }
+.hover\:text-primary-600:hover { color: var(--color-primary-600); }
+.ring-primary-500\/50 { --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 50%, transparent); }
+.focus\:ring-primary-500\/50:focus { ring-color: color-mix(in srgb, var(--color-primary-500) 50%, transparent); }
+.border-primary-100 { border-color: var(--color-primary-100); }
+.dark\:bg-primary-900\/20 { background-color: color-mix(in srgb, var(--color-primary-900) 20%, transparent); }
+.dark\:bg-primary-900\/30 { background-color: color-mix(in srgb, var(--color-primary-900) 30%, transparent); }
+.dark\:text-primary-400 { color: var(--color-primary-400); }
+
