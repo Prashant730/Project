@@ -16,14 +16,19 @@ app.use(
   }),
 )
 
-// SPA routing: serve index.html for all non-file requests
-app.get(/.*/, (req, res) => {
-  // Check if the request is for a file (has extension)
+// SPA routing: serve index.html for all non-file requests (middleware approach)
+app.use((req, res, next) => {
+  // Skip static file requests
   if (path.extname(req.path)) {
-    res.status(404).send('Not Found')
-  } else {
-    res.sendFile(path.join(__dirname, '../dist/index.html'))
+    return next()
   }
+  // Serve index.html for all route requests
+  res.sendFile(path.join(__dirname, '../dist/index.html'))
+})
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).send('Not Found')
 })
 
 app.listen(PORT, '0.0.0.0', () => {
