@@ -8,6 +8,7 @@ interface PaginationProps {
 }
 
 export const Pagination: React.FC<PaginationProps> = ({ page, totalPages, onPageChange }) => {
+  if ((import.meta as any).env?.DEV) console.debug('Pagination mounted', { page, totalPages });
   if (totalPages <= 1) return null;
 
   return (
@@ -58,3 +59,5 @@ export const Pagination: React.FC<PaginationProps> = ({ page, totalPages, onPage
     </div>
   );
 };
+
+export default Pagination;

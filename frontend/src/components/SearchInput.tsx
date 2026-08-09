@@ -10,6 +10,8 @@ interface SearchInputProps {
 export const SearchInput: React.FC<SearchInputProps> = ({ value, onChange, placeholder = 'Search...' }) => {
   const [localValue, setLocalValue] = useState(value);
 
+  if ((import.meta as any).env?.DEV) console.debug('SearchInput mounted', { value });
+
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
