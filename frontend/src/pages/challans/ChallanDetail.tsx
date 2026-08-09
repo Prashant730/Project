@@ -1,9 +1,10 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Loader2, Download } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
+import { generateInvoice } from '../../utils/generateInvoice';
 
 const rotations = ['stamp-cw', 'stamp-ccw', 'stamp-flat'];
 
@@ -71,7 +72,13 @@ const ChallanDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {challan.status === 'CONFIRMED' && (
+            <button onClick={() => generateInvoice(challan)} className="btn-secondary">
+              <Download className="w-3.5 h-3.5" />
+              Download Invoice
+            </button>
+          )}
           {canConfirm && (
             <button onClick={() => confirmMutation.mutate()} disabled={confirmMutation.isPending} className="btn-primary">
               {confirmMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
