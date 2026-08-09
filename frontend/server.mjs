@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5173
 
 // Serve static files from dist folder with caching
 app.use(
-  express.static(path.join(__dirname, '../dist'), {
+  express.static(path.join(__dirname, './dist'), {
     maxAge: '1d',
     etag: false,
   }),
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     return next()
   }
   // Serve index.html for all route requests
-  res.sendFile(path.join(__dirname, '../dist/index.html'))
+  res.sendFile(path.join(__dirname, './dist/index.html'))
 })
 
 // 404 handler
