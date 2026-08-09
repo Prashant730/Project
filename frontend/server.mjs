@@ -17,7 +17,7 @@ app.use(
 )
 
 // SPA routing: serve index.html for all non-file requests
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   // Check if the request is for a file (has extension)
   if (path.extname(req.path)) {
     res.status(404).send('Not Found')
