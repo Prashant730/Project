@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Edit2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { Plus, Edit2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import api from '../../api/client';
 import StockMovementModal from './StockMovementModal';
 import { Pagination } from '../../components/Pagination';

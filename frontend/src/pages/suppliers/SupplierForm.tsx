@@ -22,8 +22,8 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 const SupplierForm: React.FC = () => {
-  if ((import.meta as any).env?.DEV) console.debug('SupplierForm mounted', { id });
   const { id } = useParams<{ id: string }>();
+  if ((import.meta as any).env?.DEV) console.debug('SupplierForm mounted', { id });
   const isEditing = Boolean(id && id !== 'new');
   const navigate = useNavigate();
   const queryClient = useQueryClient();

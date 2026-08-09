@@ -6,8 +6,8 @@ import api from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 
 const PODetail: React.FC = () => {
-  if ((import.meta as any).env?.DEV) console.debug('PODetail mounted', { id });
   const { id } = useParams<{ id: string }>();
+  if ((import.meta as any).env?.DEV) console.debug('PODetail mounted', { id });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();

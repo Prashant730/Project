@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Edit2, Phone, Mail, Building, Clock } from 'lucide-react';
+import { Plus, Edit2, Phone, Mail, Building, Clock } from 'lucide-react';
 import api from '../../api/client';
 import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
