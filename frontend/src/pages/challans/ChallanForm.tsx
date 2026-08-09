@@ -7,190 +7,140 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, Trash2, Loader2 } from 'lucide-react';
 import api from '../../api/client';
 
-const challanSchema = z.object({
-  customerId: z.string().uuid('Please select a customer'),
+const schema = z.object({
+  customerId: z.string().uuid('Select a customer'),
   items: z.array(z.object({
-    productId: z.string().uuid('Please select a product'),
-    quantity: z.number().int().positive('Quantity must be positive'),
-  })).min(1, 'At least one item is required'),
+    productId: z.string().uuid('Select a product'),
+    quantity: z.number().int().positive('Must be positive'),
+  })).min(1, 'At least one item required'),
 });
-
-type ChallanFormValues = z.infer<typeof challanSchema>;
+type FormValues = z.infer<typeof schema>;
 
 const ChallanForm: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: customerData } = useQuery({
-    queryKey: ['customers', { limit: 100 }],
-    queryFn: async () => (await api.get('/customers?limit=100')).data,
-  });
+  const { data: customerData } = useQuery({ queryKey: ['customers', { limit: 200 }], queryFn: async () => (await api.get('/customers?limit=200')).data });
+  const { data: productData }  = useQuery({ queryKey: ['products',  { limit: 200 }], queryFn: async () => (await api.get('/products?limit=200')).data  });
 
-  const { data: productData } = useQuery({
-    queryKey: ['products', { limit: 100 }],
-    queryFn: async () => (await api.get('/products?limit=100')).data,
-  });
-
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<ChallanFormValues>({
-    resolver: zodResolver(challanSchema),
+  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: { items: [{ productId: '', quantity: 1 }] },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
-
   const watchedItems = watch('items');
 
-  const getProductById = (id: string) =>
-    productData?.data?.find((p: any) => p.id === id);
+  const getProduct = (id: string) => productData?.data?.find((p: any) => p.id === id);
 
-  const calculateTotal = () =>
-    watchedItems.reduce((sum: number, item: any) => {
-      const product = getProductById(item.productId);
-      if (!product || !item.quantity) return sum;
-      return sum + Number(product.unitPrice) * (item.quantity || 0);
-    }, 0);
+  const grandTotal = watchedItems.reduce((sum: number, item: any) => {
+    const p = getProduct(item.productId);
+    return sum + (p ? Number(p.unitPrice) * (item.quantity || 0) : 0);
+  }, 0);
 
   const mutation = useMutation({
-    mutationFn: async (data: ChallanFormValues) =>
-      (await api.post('/challans', data)).data,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['challans'] });
-      navigate('/challans');
-    },
+    mutationFn: async (data: FormValues) => (await api.post('/challans', data)).data,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['challans'] }); navigate('/challans'); },
   });
 
-  const onSubmit = (data: ChallanFormValues) => mutation.mutate(data);
-
   const customers = customerData?.data || [];
-  const products = productData?.data || [];
+  const products  = productData?.data || [];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/challans')} className="p-2 bg-surface rounded-full border border-border-color hover:bg-surface-muted transition-colors">
-          <ArrowLeft className="w-5 h-5 text-text-main" />
-        </button>
+        <button onClick={() => navigate('/challans')} className="btn-secondary p-2"><ArrowLeft className="w-4 h-4" /></button>
         <div>
-          <h1 className="text-2xl font-bold text-text-main">New Sales Challan</h1>
-          <p className="text-text-muted text-sm mt-1">Create a draft challan for a customer</p>
+          <p className="text-xs mb-1" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>New Challan</p>
+          <h1 className="text-xl font-medium" style={{ color: 'var(--color-ink)' }}>Create draft challan</h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Customer Selection */}
-        <div className="bg-surface rounded-2xl border border-border-color shadow-sm p-6">
-          <h2 className="text-lg font-bold text-text-main border-b border-border-color pb-3 mb-4">Customer</h2>
+      {mutation.isError && (
+        <div className="px-4 py-3 text-sm" style={{ borderLeft: '3px solid var(--color-terracotta)', color: 'var(--color-terracotta)', background: 'color-mix(in srgb, var(--color-terracotta) 8%, transparent)' }}>
+          Failed to create challan. Please check your inputs.
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-5">
+        {/* Customer */}
+        <div className="p-6" style={{ border: '1px solid var(--color-rule)', borderRadius: '2px' }}>
+          <p className="text-xs mb-4 pb-2 font-semibold" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)', borderBottom: '1px solid var(--color-rule)' }}>
+            Customer
+          </p>
           <div>
-            <label className="block text-sm font-medium text-text-main mb-1">Select Customer <span className="text-red-500">*</span></label>
-            <select
-              {...register('customerId')}
-              className="w-full bg-surface-muted border border-border-color rounded-lg px-3 py-2 text-text-main focus:outline-none focus:ring-2 focus:ring-primary-500/50"
-            >
-              <option value="">-- Choose a customer --</option>
+            <label className="field-label">Select Customer *</label>
+            <select {...register('customerId')} className="field-select">
+              <option value="">— choose —</option>
               {customers.map((c: any) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{c.businessName ? ` (${c.businessName})` : ''}
-                </option>
+                <option key={c.id} value={c.id}>{c.name}{c.businessName ? ` (${c.businessName})` : ''}</option>
               ))}
             </select>
-            {errors.customerId && <p className="text-red-500 text-xs mt-1">{errors.customerId.message}</p>}
+            {errors.customerId && <p className="mt-1 text-xs" style={{ color: 'var(--color-terracotta)' }}>{errors.customerId.message}</p>}
           </div>
         </div>
 
         {/* Items */}
-        <div className="bg-surface rounded-2xl border border-border-color shadow-sm p-6">
-          <div className="flex items-center justify-between border-b border-border-color pb-3 mb-4">
-            <h2 className="text-lg font-bold text-text-main">Line Items</h2>
-            <button
-              type="button"
-              onClick={() => append({ productId: '', quantity: 1 })}
-              className="text-primary-600 font-medium text-sm flex items-center gap-1 hover:bg-primary-50 dark:hover:bg-primary-900/20 px-3 py-1.5 rounded-lg"
-            >
-              <Plus className="w-4 h-4" /> Add Item
+        <div className="p-6" style={{ border: '1px solid var(--color-rule)', borderRadius: '2px' }}>
+          <div className="flex items-center justify-between pb-3 mb-4" style={{ borderBottom: '1px solid var(--color-rule)' }}>
+            <p className="text-xs font-semibold" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+              Line Items
+            </p>
+            <button type="button" onClick={() => append({ productId: '', quantity: 1 })} className="btn-secondary py-1">
+              <Plus className="w-3 h-3" /> Add Item
             </button>
           </div>
 
-          {errors.items?.root && (
-            <p className="text-red-500 text-sm mb-4">{errors.items.root.message}</p>
-          )}
+          {/* Column headers */}
+          <div className="hidden md:grid grid-cols-12 gap-3 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)', paddingBottom: '6px', borderBottom: '1px solid var(--color-rule)' }}>
+            <div className="col-span-6">Product</div>
+            <div className="col-span-2 text-center">Stock</div>
+            <div className="col-span-2 text-center">Qty</div>
+            <div className="col-span-1 text-right">Subtotal</div>
+            <div className="col-span-1"></div>
+          </div>
 
-          <div className="space-y-4">
-            {/* Header row */}
-            <div className="hidden md:grid grid-cols-12 gap-3 text-xs text-text-muted uppercase font-semibold px-1">
-              <div className="col-span-6">Product</div>
-              <div className="col-span-2 text-center">Stock</div>
-              <div className="col-span-2 text-center">Qty</div>
-              <div className="col-span-1 text-right">Subtotal</div>
-              <div className="col-span-1"></div>
-            </div>
-
-            {fields.map((field, index) => {
-              const selectedProduct = getProductById(watchedItems[index]?.productId);
-              const subtotal = selectedProduct
-                ? Number(selectedProduct.unitPrice) * (watchedItems[index]?.quantity || 0)
-                : 0;
+          <div className="space-y-3 mt-3">
+            {fields.map((field, idx) => {
+              const selectedProd = getProduct(watchedItems[idx]?.productId);
+              const isLow = selectedProd && selectedProd.currentStock <= selectedProd.minStockAlert;
+              const subtotal = selectedProd ? Number(selectedProd.unitPrice) * (watchedItems[idx]?.quantity || 0) : 0;
 
               return (
-                <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-surface-muted rounded-xl p-3 border border-border-color">
+                <div key={field.id} className="grid grid-cols-12 gap-3 items-center py-2" style={{ borderBottom: '1px solid var(--color-rule)' }}>
                   <div className="col-span-12 md:col-span-6">
-                    <Controller
-                      name={`items.${index}.productId`}
-                      control={control}
-                      render={({ field: f }) => (
-                        <select
-                          {...f}
-                          className="w-full bg-surface border border-border-color rounded-lg px-3 py-2 text-text-main focus:outline-none focus:ring-2 focus:ring-primary-500/50 text-sm"
-                        >
-                          <option value="">-- Select product --</option>
-                          {products.map((p: any) => (
-                            <option key={p.id} value={p.id}>{p.name} (SKU: {p.sku})</option>
-                          ))}
-                        </select>
-                      )}
-                    />
-                    {errors.items?.[index]?.productId && (
-                      <p className="text-red-500 text-xs mt-1">{errors.items[index]?.productId?.message}</p>
-                    )}
+                    <Controller name={`items.${idx}.productId`} control={control} render={({ field: f }) => (
+                      <select {...f} className="field-select text-sm">
+                        <option value="">— select product —</option>
+                        {products.map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+                        ))}
+                      </select>
+                    )} />
+                    {errors.items?.[idx]?.productId && <p className="mt-1 text-xs" style={{ color: 'var(--color-terracotta)' }}>{errors.items[idx]?.productId?.message}</p>}
                   </div>
 
-                  <div className="col-span-4 md:col-span-2 flex items-center justify-center">
-                    {selectedProduct ? (
-                      <span className={`text-sm font-semibold px-2.5 py-1 rounded-full border ${
-                        selectedProduct.currentStock <= selectedProduct.minStockAlert
-                          ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
-                          : 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800'
-                      }`}>
-                        {selectedProduct.currentStock}
-                      </span>
-                    ) : <span className="text-text-muted text-sm">—</span>}
+                  <div className="col-span-3 md:col-span-2 text-center" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: isLow ? '#d97706' : 'var(--color-ink)' }}>
+                    {selectedProd ? selectedProd.currentStock : '—'}
                   </div>
 
-                  <div className="col-span-4 md:col-span-2">
+                  <div className="col-span-5 md:col-span-2">
                     <input
                       type="number"
                       min="1"
-                      {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                      className="w-full bg-surface border border-border-color rounded-lg px-3 py-2 text-text-main focus:outline-none focus:ring-2 focus:ring-primary-500/50 text-sm text-center"
+                      {...register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                      className="field-input text-center"
+                      style={{ fontFamily: 'var(--font-mono)' }}
                     />
-                    {errors.items?.[index]?.quantity && (
-                      <p className="text-red-500 text-xs mt-1">{errors.items[index]?.quantity?.message}</p>
-                    )}
                   </div>
 
-                  <div className="col-span-3 md:col-span-1 flex items-center justify-end">
-                    <span className="text-sm font-semibold text-text-main">
-                      ₹{subtotal.toFixed(2)}
-                    </span>
+                  <div className="col-span-3 md:col-span-1 text-right" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-ink)' }}>
+                    ₹{subtotal.toFixed(0)}
                   </div>
 
-                  <div className="col-span-1 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      disabled={fields.length === 1}
-                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-30 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                  <div className="col-span-1 flex justify-end">
+                    <button type="button" onClick={() => remove(idx)} disabled={fields.length === 1} className="btn-danger p-1">
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -198,22 +148,24 @@ const ChallanForm: React.FC = () => {
             })}
           </div>
 
-          {/* Total */}
-          <div className="mt-6 pt-4 border-t border-border-color flex justify-end">
+          {/* Grand total */}
+          <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: '1px solid var(--color-rule)' }}>
             <div className="text-right">
-              <p className="text-text-muted text-sm">Estimated Total</p>
-              <p className="text-2xl font-bold text-text-main">₹{calculateTotal().toFixed(2)}</p>
-              <p className="text-xs text-text-muted mt-1">Final prices are snapshotted on confirmation</p>
+              <p className="text-xs mb-1" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+                Estimated Total
+              </p>
+              <p className="text-2xl font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-ink)' }}>
+                ₹{grandTotal.toFixed(2)}
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>Prices snapshotted on confirmation</p>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate('/challans')} className="px-5 py-2.5 rounded-lg font-medium text-text-main border border-border-color hover:bg-surface-muted transition-colors">
-            Cancel
-          </button>
-          <button type="submit" disabled={mutation.isPending} className="px-5 py-2.5 rounded-lg font-medium text-white bg-primary-600 hover:bg-primary-700 flex items-center gap-2 transition-colors disabled:opacity-70">
-            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <button type="button" onClick={() => navigate('/challans')} className="btn-secondary">Cancel</button>
+          <button type="submit" disabled={mutation.isPending} className="btn-primary">
+            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Save as Draft
           </button>
         </div>

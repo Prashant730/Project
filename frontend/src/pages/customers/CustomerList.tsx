@@ -4,6 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Edit2, Phone, Mail, Building, Clock } from 'lucide-react';
 import api from '../../api/client';
 
+// stamp rotation cycle
+const rotations = ['stamp-cw', 'stamp-ccw', 'stamp-flat', 'stamp-cw', 'stamp-ccw'];
+
+const statusStamp = (status: string, idx: number) => {
+  const rot = rotations[idx % rotations.length];
+  const variant =
+    status === 'ACTIVE'   ? 'stamp-active'   :
+    status === 'LEAD'     ? 'stamp-lead'      :
+    status === 'INACTIVE' ? 'stamp-inactive'  : 'stamp-inactive';
+  return `stamp ${variant} ${rot}`;
+};
+
 const CustomerList: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -12,141 +24,114 @@ const CustomerList: React.FC = () => {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['customers', { page, limit, search }],
-    queryFn: async () => {
-      const res = await api.get('/customers', { params: { page, limit, search } });
-      return res.data;
-    },
+    queryFn: async () => (await api.get('/customers', { params: { page, limit, search } })).data,
   });
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-main">Customers</h1>
-          <p className="text-text-muted text-sm mt-1">Manage your clients and leads</p>
+          <p className="text-xs mb-1" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>CRM</p>
+          <h1 className="text-2xl font-medium" style={{ color: 'var(--color-ink)' }}>Customers</h1>
         </div>
-        <button
-          onClick={() => navigate('/customers/new')}
-          className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Customer
+        <button className="btn-primary" onClick={() => navigate('/customers/new')}>
+          <Plus className="w-3.5 h-3.5" />
+          New Customer
         </button>
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-sm border border-border-color overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-border-color flex items-center">
-          <div className="relative w-full max-w-md">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or mobile..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="w-full bg-surface-muted border border-border-color rounded-lg pl-10 pr-4 py-2 text-text-main focus:outline-none focus:ring-2 focus:ring-primary-500/50"
-            />
-          </div>
+      {/* Table wrapper */}
+      <div style={{ border: '1px solid var(--color-rule)', borderRadius: '2px' }}>
+        {/* Search bar */}
+        <div className="flex items-center px-4 py-3" style={{ borderBottom: '1px solid var(--color-rule)' }}>
+          <Search className="w-4 h-4 mr-3 shrink-0" style={{ color: 'var(--color-muted)' }} />
+          <input
+            type="text"
+            placeholder="Search name, email, mobile…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            className="flex-1 bg-transparent outline-none text-sm"
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-ink)' }}
+          />
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="erp-table">
             <thead>
-              <tr className="bg-surface-muted border-b border-border-color text-text-muted text-xs uppercase tracking-wider font-semibold">
-                <th className="p-4">Customer Info</th>
-                <th className="p-4">Business</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Follow Up</th>
-                <th className="p-4 text-right">Actions</th>
+              <tr>
+                <th>Customer</th>
+                <th>Business</th>
+                <th>Status</th>
+                <th>Follow Up</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-color text-sm">
+            <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-text-muted">Loading customers...</td>
-                </tr>
+                <tr><td colSpan={5} className="text-center py-10 text-sm" style={{ color: 'var(--color-muted)' }}>Loading…</td></tr>
               ) : isError ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-red-500">Error loading customers.</td>
-                </tr>
+                <tr><td colSpan={5} className="text-center py-10 text-sm" style={{ color: 'var(--color-terracotta)' }}>Error loading customers.</td></tr>
               ) : data?.data.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-text-muted">No customers found.</td>
-                </tr>
-              ) : (
-                data?.data.map((customer: any) => (
-                  <tr key={customer.id} className="hover:bg-surface-muted/50 transition-colors">
-                    <td className="p-4">
-                      <p className="font-semibold text-text-main">{customer.name}</p>
-                      <div className="flex items-center gap-3 mt-1 text-text-muted text-xs">
-                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {customer.mobile}</span>
-                        {customer.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {customer.email}</span>}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {customer.businessName ? (
-                        <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-text-muted" />
-                          <span className="text-text-main">{customer.businessName}</span>
-                        </div>
-                      ) : <span className="text-text-muted">-</span>}
-                      {customer.customerType && <p className="text-xs text-text-muted mt-1">{customer.customerType}</p>}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        customer.status === 'LEAD' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                        customer.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                      }`}>
-                        {customer.status}
+                <tr><td colSpan={5} className="text-center py-10 text-sm" style={{ color: 'var(--color-muted)' }}>No customers found.</td></tr>
+              ) : data?.data.map((c: any, idx: number) => (
+                <tr key={c.id}>
+                  <td>
+                    <p className="font-medium text-sm" style={{ color: 'var(--color-ink)' }}>{c.name}</p>
+                    <div className="flex items-center gap-3 mt-1" style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>
+                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.mobile}</span>
+                      {c.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{c.email}</span>}
+                    </div>
+                  </td>
+                  <td>
+                    {c.businessName ? (
+                      <span className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
+                        <Building className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-muted)' }} />
+                        {c.businessName}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      {customer.followUpDate ? (
-                        <div className="flex items-center gap-1.5 text-text-main text-sm">
-                          <Clock className="w-4 h-4 text-primary-500" />
-                          {new Date(customer.followUpDate).toLocaleDateString()}
-                        </div>
-                      ) : <span className="text-text-muted">-</span>}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => navigate(`/customers/${customer.id}`)}
-                        className="p-2 text-text-muted hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+                    ) : <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                    {c.customerType && (
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-muted)', marginTop: '2px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        {c.customerType}
+                      </p>
+                    )}
+                  </td>
+                  <td>
+                    <span className={statusStamp(c.status, idx)}>{c.status}</span>
+                  </td>
+                  <td>
+                    {c.followUpDate ? (
+                      <span className="flex items-center gap-1.5 text-sm" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-ink)' }}>
+                        <Clock className="w-3.5 h-3.5" style={{ color: 'var(--color-muted)' }} />
+                        {new Date(c.followUpDate).toLocaleDateString()}
+                      </span>
+                    ) : <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      onClick={() => navigate(`/customers/${c.id}`)}
+                      className="btn-secondary py-1 px-2"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
         {data?.meta && data.meta.totalPages > 1 && (
-          <div className="p-4 border-t border-border-color flex items-center justify-between bg-surface-muted text-sm">
-            <p className="text-text-muted">
-              Showing <span className="font-medium text-text-main">{(page - 1) * limit + 1}</span> to <span className="font-medium text-text-main">{Math.min(page * limit, data.meta.total)}</span> of <span className="font-medium text-text-main">{data.meta.total}</span> results
-            </p>
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{ borderTop: '1px solid var(--color-rule)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem' }}
+          >
+            <span style={{ color: 'var(--color-muted)' }}>
+              {(page - 1) * limit + 1}–{Math.min(page * limit, data.meta.total)} of {data.meta.total}
+            </span>
             <div className="flex gap-2">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 border border-border-color rounded-lg bg-surface text-text-main disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page === data.meta.totalPages}
-                className="px-3 py-1.5 border border-border-color rounded-lg bg-surface text-text-main disabled:opacity-50"
-              >
-                Next
-              </button>
+              <button className="btn-secondary py-1" onClick={() => setPage(p => p - 1)} disabled={page === 1}>← Prev</button>
+              <button className="btn-secondary py-1" onClick={() => setPage(p => p + 1)} disabled={page === data.meta.totalPages}>Next →</button>
             </div>
           </div>
         )}
