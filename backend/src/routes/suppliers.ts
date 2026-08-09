@@ -1,20 +1,21 @@
-import { Router } from 'express';
+// Updated: annotate routes (commit group 2)
+import { Router } from 'express'
 import {
   getSuppliers,
   getSupplierById,
   createSupplier,
-  updateSupplier
-} from '../controllers/supplierController';
-import { authenticate, authorize } from '../middleware/auth';
+  updateSupplier,
+} from '../controllers/supplierController'
+import { authenticate, authorize } from '../middleware/auth'
 
-const router = Router();
+const router = Router()
 
-router.use(authenticate);
-router.use(authorize(['ADMIN', 'WAREHOUSE']));
+router.use(authenticate)
+router.use(authorize(['ADMIN', 'WAREHOUSE']))
 
-router.get('/', getSuppliers);
-router.get('/:id', getSupplierById);
-router.post('/', createSupplier);
-router.put('/:id', updateSupplier);
+router.get('/', getSuppliers)
+router.get('/:id', getSupplierById)
+router.post('/', createSupplier)
+router.put('/:id', updateSupplier)
 
-export default router;
+export default router
