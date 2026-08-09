@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec npx tsx src/index.ts",
     "start": "npx tsx src/index.ts",
-    "test": "jest"
+    "test": "jest",
+    "db:seed": "npx ts-node prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
