@@ -7,6 +7,7 @@ import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 
 const SupplierList: React.FC = () => {
+  if ((import.meta as any).env?.DEV) console.debug('SupplierList mounted');
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

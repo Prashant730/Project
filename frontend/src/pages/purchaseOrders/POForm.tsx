@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import api from '../../api/client';
 
 const POForm: React.FC = () => {
+  if ((import.meta as any).env?.DEV) console.debug('POForm mounted');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -22,7 +23,7 @@ const POForm: React.FC = () => {
   });
 
   const addItem = () => setItems([...items, { productId: '', quantity: 1, unitCost: 0 }]);
-  
+
   const updateItem = (idx: number, field: string, val: string | number) => {
     const newItems = [...items];
     (newItems[idx] as any)[field] = val;

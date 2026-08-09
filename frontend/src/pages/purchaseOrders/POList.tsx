@@ -7,6 +7,7 @@ import { Pagination } from '../../components/Pagination';
 import { SearchInput } from '../../components/SearchInput';
 
 const POList: React.FC = () => {
+  if ((import.meta as any).env?.DEV) console.debug('POList mounted');
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

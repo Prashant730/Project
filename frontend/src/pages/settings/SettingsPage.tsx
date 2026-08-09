@@ -13,6 +13,7 @@ interface SettingsForm {
 }
 
 const SettingsPage: React.FC = () => {
+  if ((import.meta as any).env?.DEV) console.debug('SettingsPage mounted');
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
